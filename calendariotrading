@@ -1,0 +1,2420 @@
+DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Profit Calendar</title>
+    <style>
+        /* Definición de variables CSS para los colores (Modo Claro por defecto) */
+        :root {
+            --bg-body: #ffffff;
+            --bg-container: rgb(255, 255, 255);
+            --text-primary: #000000;
+            --text-secondary: #050505;
+            --border-color-light: #e9ecefb9;
+            --border-color-medium: #ced4da;
+            --btn-month-bg: #e9ecef;
+            --btn-month-text: #495057;
+            --day-cell-bg-no-trades: #f8f9fad6;
+            --day-cell-border-hover: #dee2e6;
+            --day-cell-positive-bg-start: #c8f7c5;
+            --day-cell-positive-bg-end: #a8e6a3;
+            --day-cell-positive-border: rgba(40, 167, 69, 0.4);
+            --day-cell-negative-bg-start: #ffc1c7;
+            --day-cell-negative-bg-end: #ffaab0;
+            --day-cell-negative-border: rgba(220, 53, 69, 0.4);
+            --profit-positive-text-header: #28a745;
+            --profit-positive-text-cell: #155724;
+            --profit-negative-text-header: #dc3545;
+            --profit-negative-text-cell: #721c24;
+            --today-bg: #007bff;
+            --today-text: white;
+            --modal-bg: white;
+            --modal-border-input: #bfc4c9;
+            --modal-focus-input: #007bff;
+            --btn-primary-bg: #007bff;
+            --btn-primary-hover-bg: #0056b3;
+            --btn-secondary-bg: #6c757d;
+            --btn-secondary-hover-bg: #545b62;
+            --btn-danger-bg: #dc3545;
+            --btn-danger-hover-bg: #c82333;
+            --account-capital-value: #007bff;
+            --neutral-profit-text: #495057;
+            /* Color para 0 profit */
+
+            /* Variables para el tamaño del contenedor principal */
+            --container-max-width: 1400px;
+            /* Default (Normal) */
+            /* Variables para el tamaño de las celdas del calendario */
+            --day-cell-aspect-ratio: 1 / 1;
+            /* Default aspect ratio */
+            --day-cell-padding: 15px;
+            /* Default padding */
+        }
+
+        /* Modo Oscuro */
+        body.dark-mode {
+            --bg-body: #000000;
+            /* Más oscuro */
+            --bg-container: #000000;
+            /* Más oscuro */
+            --text-primary: #ffffff;
+            --text-secondary: #ffffff;
+            --border-color-light: #333333;
+            --border-color-medium: #444444;
+            --btn-month-bg: #3A3A3A;
+            --btn-month-text: #E0E0E0;
+            --day-cell-bg-no-trades: #2A2A2A;
+            --day-cell-border-hover: #555555;
+            --day-cell-positive-bg-start: #1a5e1a;
+            --day-cell-positive-bg-end: #2d7c2d;
+            --day-cell-positive-border: rgba(40, 167, 69, 0.6);
+            --day-cell-negative-bg-start: #7a1e1e;
+            --day-cell-negative-bg-end: #9a2a2a;
+            --day-cell-negative-border: rgba(220, 53, 69, 0.6);
+            --profit-positive-text-header: #66bb6a;
+            --profit-positive-text-cell: #81c784;
+            --profit-negative-text-header: #ef5350;
+            --profit-negative-text-cell: #e57373;
+            --today-bg: #6699ff;
+            --today-text: #040303;
+            --modal-bg: #2A2A2A;
+            --modal-border-input: #444444;
+            --modal-focus-input: #6699ff;
+            --btn-primary-bg: #6699ff;
+            --btn-primary-hover-bg: #4477ee;
+            --btn-secondary-bg: #707070;
+            --btn-secondary-hover-bg: #5a5a5a;
+            --btn-danger-bg: #ef5350;
+            --btn-danger-hover-bg: #d32f2f;
+            --account-capital-value: #6699ff;
+            --neutral-profit-text: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Verdana, Geneva, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: var(--container-max-width);
+            margin: 0 auto;
+            background: var(--bg-container);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: max-width 0.4s ease, background-color 0.3s ease;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 40px;
+            border-bottom: 1px solid var(--border-color-light);
+            background: var(--bg-container);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .month-navigation {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .month-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-arrow {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.3s ease;
+        }
+
+        .nav-arrow:hover {
+            background-color: var(--btn-month-bg);
+        }
+
+        .this-month-btn {
+            background: var(--btn-month-bg);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--btn-month-text);
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.3s ease;
+        }
+
+        .this-month-btn:hover {
+            background-color: var(--day-cell-border-hover);
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .stat-item {
+            text-align: right;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .monthly-stats,
+        .account-capital {
+            text-align: right;
+            margin-left: 20px;
+        }
+
+        .account-capital {
+            margin-right: 20px;
+        }
+
+        .monthly-values {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .profit-amount {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .profit-amount.positive {
+            color: var(--profit-positive-text-header);
+        }
+
+        .profit-amount.negative {
+            color: var(--profit-negative-text-header);
+        }
+
+        .profit-amount.neutral {
+            color: var(--neutral-profit-text);
+        }
+
+        .trading-days {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .account-capital-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .account-capital-value {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--account-capital-value);
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            background-color: var(--btn-month-bg);
+        }
+
+        .calendar-container {
+            display: flex;
+            padding: 0;
+        }
+
+        .calendar-main {
+            flex: 1;
+            padding: 30px 40px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: auto;
+            gap: 10px;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            /* Reduced margin */
+            padding: 8px 0;
+            /* Smaller padding */
+            border: 1px solid var(--border-color-medium);
+            border-radius: 8px;
+            /* More rounded borders */
+            transition: border-color 0.3s ease, color 0.3s ease;
+            height: fit-content;
+            /* Adjust height to content */
+            display: flex;
+            /* Flex to center content */
+            align-items: center;
+            /* Vertically center */
+            justify-content: center;
+            /* Horizontally center */
+        }
+
+        .day-cell {
+            background: var(--day-cell-bg-no-trades);
+            border-radius: 12px;
+            padding: var(--day-cell-padding);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            border: 3px solid transparent;
+            aspect-ratio: var(--day-cell-aspect-ratio);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            text-align: left;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .day-cell .day-number,
+        .day-cell .profit-display,
+        .day-cell .trade-info {
+            font-size: clamp(0.8rem, 1.2vw, 1.4rem);
+            line-height: 1.3;
+        }
+
+        .day-cell .day-number.today {
+            width: clamp(24px, 2.5vw, 32px);
+            height: clamp(24px, 2.5vw, 32px);
+        }
+
+        .day-cell .profit-display {
+            margin-top: auto;
+            font-weight: 700;
+        }
+
+        .day-cell .trade-info {
+            margin-top: 5px;
+            font-size: clamp(0.7rem, 1vw, 1.2rem);
+        }
+
+        .day-cell:hover {
+            border-color: var(--day-cell-border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .day-cell.profit-positive {
+            background: linear-gradient(135deg, var(--day-cell-positive-bg-start), var(--day-cell-positive-bg-end));
+            border-color: var(--day-cell-positive-border);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
+
+        .day-cell.profit-positive:hover {
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .day-cell.profit-negative {
+            background: linear-gradient(135deg, var(--day-cell-negative-bg-start), var(--day-cell-negative-bg-end));
+            border-color: var(--day-cell-negative-border);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+        }
+
+        .day-cell.profit-negative:hover {
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .day-cell.no-trades {
+            background: var(--day-cell-bg-no-trades);
+        }
+
+        .day-cell.other-month {
+            opacity: 0.3;
+        }
+
+        .day-number {
+            font-weight: 500;
+            margin-bottom: 8px;
+            position: relative;
+            color: var(--text-primary);
+        }
+
+        .day-number.today {
+            background: var(--today-bg);
+            color: var(--today-text);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .profit-display {
+            font-weight: 700;
+        }
+
+        .profit-positive .profit-display {
+            color: var(--profit-positive-text-cell);
+        }
+
+        .profit-negative .profit-display {
+            color: var(--profit-negative-text-cell);
+        }
+
+        .profit-display.neutral {
+            color: var(--neutral-profit-text);
+        }
+
+        .trade-info {
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        .win-rate {
+            font-weight: 500;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--bg-body);
+            padding: 30px 25px;
+            border-left: 1px solid var(--border-color-light);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .week-summary {
+            margin-bottom: 20px;
+            /* Adjusted margin */
+            cursor: pointer;
+            padding: 15px;
+            /* More padding for a better box look */
+            border-radius: 12px;
+            /* Rounded borders for the box */
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            background: var(--bg-container);
+            /* Background for the box */
+            border: 1px solid var(--border-color-medium);
+            /* Border for the box */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            /* Subtle shadow */
+        }
+
+        .week-summary:hover {
+            background-color: var(--btn-month-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .week-header {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .week-profit {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .week-profit.positive {
+            color: var(--profit-positive-text-header);
+        }
+
+        .week-profit.negative {
+            color: var(--profit-negative-text-header);
+        }
+
+        .week-profit.neutral {
+            color: var(--neutral-profit-text);
+        }
+
+        .week-days {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--modal-bg);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        @media (max-width: 600px) {
+            .modal-content {
+                transform: translate(-50%, 0);
+                top: 20px;
+                margin-bottom: 20px;
+            }
+        }
+
+        .modal h3 {
+            margin-bottom: 25px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--modal-border-input);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s, background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--bg-container);
+            color: var(--text-primary);
+        }
+
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--modal-focus-input);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--btn-primary-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--btn-primary-hover-bg);
+        }
+
+        .btn-secondary {
+            background: var(--btn-secondary-bg);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--btn-secondary-hover-bg);
+        }
+
+        .btn-danger {
+            background: var(--btn-danger-bg);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: var(--btn-danger-hover-bg);
+        }
+
+        /* Dark Mode Toggle Switch Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 45px;
+            height: 25px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--text-secondary);
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 25px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 17px;
+            width: 17px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--today-bg);
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px var(--today-bg);
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(20px);
+            -ms-transform: translateX(20px);
+            transform: translateX(20px);
+        }
+
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-color-medium);
+        }
+
+        .settings-option:last-child {
+            border-bottom: none;
+        }
+
+        .settings-option label {
+            margin-bottom: 0;
+        }
+
+        /* Styles for listing existing trades in modal */
+        .trades-list {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color-light);
+        }
+
+        .trades-list h4 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .trade-item {
+            background-color: var(--btn-month-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color-medium);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .trade-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .trade-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .trade-item-pnl {
+            font-size: 1.1rem;
+        }
+
+        .trade-item-pnl.positive {
+            color: var(--profit-positive-text-cell);
+        }
+
+        .trade-item-pnl.negative {
+            color: var(--profit-negative-text-cell);
+        }
+
+        .trade-item-pnl.neutral {
+            color: var(--neutral-profit-text);
+        }
+
+        .trade-item-notes {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .trade-item-notes a {
+            color: var(--account-capital-value);
+            text-decoration: none;
+        }
+
+        .trade-item-notes a:hover {
+            text-decoration: underline;
+        }
+
+        .trade-item-notes img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-top: 5px;
+            border-radius: 4px;
+        }
+
+        .trade-item-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .trade-item-actions .btn {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+        }
+
+        /* Withdrawal Section Styles */
+        .withdrawal-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color-medium);
+        }
+
+        .withdrawal-section h4 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .withdrawal-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .withdrawal-form input {
+            flex-grow: 1;
+            padding: 10px;
+        }
+
+        .withdrawal-history {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color-light);
+            border-radius: 6px;
+            padding: 10px;
+            background-color: var(--bg-body);
+        }
+
+        .withdrawal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color-light);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .withdrawal-item:last-child {
+            border-bottom: none;
+        }
+
+        .withdrawal-amount {
+            color: var(--profit-negative-text-cell);
+            font-weight: 600;
+        }
+
+        .withdrawal-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .withdrawal-controls h5 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        /* Week Summary Modal */
+        #weekSummaryModal .modal-content {
+            max-width: 400px;
+        }
+
+        #weekSummaryDetails {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        #weekSummaryDetails .label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        #weekSummaryDetails .value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        #weekSummaryDetails .profit-value.positive {
+            color: var(--profit-positive-text-header);
+        }
+
+        #weekSummaryDetails .profit-value.negative {
+            color: var(--profit-negative-text-header);
+        }
+
+        #weekSummaryDetails .profit-value.neutral {
+            color: var(--neutral-profit-text);
+        }
+
+        /* Nuevas clases para diferentes tamaños de celda */
+        .calendar-size-extra-small {
+            --day-cell-aspect-ratio: 0.8 / 1;
+            --day-cell-padding: 8px;
+        }
+
+        .calendar-size-small {
+            --day-cell-aspect-ratio: 1 / 1;
+            --day-cell-padding: 12px;
+        }
+
+        .calendar-size-medium {
+            --day-cell-aspect-ratio: 1.2 / 1;
+            --day-cell-padding: 18px;
+        }
+
+        .calendar-size-large {
+            --day-cell-aspect-ratio: 1.4 / 1;
+            --day-cell-padding: 22px;
+        }
+
+        .calendar-size-extra-large {
+            --day-cell-aspect-ratio: 1.6 / 1;
+            --day-cell-padding: 26px;
+        }
+
+        /* --- NUEVOS ESTILOS PARA LA VISIÓN DE CRECIMIENTO --- */
+
+        .growth-vision-section {
+            margin-top: 40px;
+            padding: 30px 40px;
+            border-top: 1px solid var(--border-color-light);
+            background: var(--bg-container);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .growth-vision-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .growth-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .growth-metric-card {
+            background-color: var(--btn-month-bg);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(252, 1, 1, 0.811);
+            transition: background-color 0.3s ease;
+            border: 1px solid var(--border-color-medium);
+        }
+
+        .growth-metric-card .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .growth-metric-card .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .growth-metric-card .metric-value.positive {
+            color: var(--profit-positive-text-header);
+        }
+
+        .growth-metric-card .metric-value.negative {
+            color: var(--profit-negative-text-header);
+        }
+
+        .growth-metric-card .metric-value.neutral {
+            color: var(--neutral-profit-text);
+        }
+
+        .growth-metric-card .metric-change {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Gráfico de Crecimiento */
+        .growth-chart-container {
+            background-color: var(--bg-container);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgb(255, 0, 0);
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color-medium);
+        }
+
+        .growth-chart-container .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .growth-chart {
+            width: 100%;
+            height: 350px;
+            /* Altura del gráfico */
+            background-color: var(--day-cell-bg-no-trades);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border-color-light);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .chart-line {
+            fill: none;
+            stroke: var(--today-bg);
+            stroke-width: 3;
+            transition: stroke 0.3s ease;
+        }
+
+        .chart-dot {
+            fill: var(--today-bg);
+            /* Color de los puntos */
+            stroke: white;
+            /* Borde del punto */
+            stroke-width: 1.5;
+        }
+
+        .chart-axis-line {
+            stroke: var(--border-color-medium);
+            stroke-width: 1;
+        }
+
+        .chart-axis-text {
+            font-size: 0.8rem;
+            fill: var(--text-secondary);
+            font-family: 'Verdana', sans-serif;
+        }
+
+        /* Objetivos y Metas */
+        .goals-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .goal-card {
+            background-color: var(--btn-month-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgb(247, 3, 3);
+            border: 1px solid var(--border-color-medium);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .goal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .goal-progress {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--profit-positive-text-header);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--border-color-light);
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--today-bg);
+            border-radius: 10px;
+            transition: width 0.5s ease-out, background-color 0.3s ease;
+        }
+
+        .progress-bar.positive {
+            background-color: var(--profit-positive-text-header);
+        }
+
+        .progress-bar.negative {
+            background-color: var(--profit-negative-text-header);
+        }
+
+        .goal-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+
+        /* Responsive adjustments for growth section */
+        @media (max-width: 768px) {
+            .growth-vision-section {
+                padding: 20px;
+            }
+
+            .growth-metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .goals-section {
+                grid-template-columns: 1fr;
+            }
+
+            .growth-chart {
+                height: 250px;
+            }
+
+            .growth-metric-card .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .goal-title {
+                font-size: 1.1rem;
+            }
+
+            .goal-progress {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="month-navigation">
+                <button class="nav-arrow" onclick="previousMonth()">‹</button>
+                <div class="month-title" id="currentMonth">June 2025</div>
+                <button class="nav-arrow" onclick="nextMonth()">›</button>
+                <button class="this-month-btn" id="deleteMonthButton"
+                    onclick="deleteCurrentMonthTrades()">Eliminar</button>
+            </div>
+            <div class="header-stats">
+                <div class="account-capital">
+                    <div class="account-capital-label">Account Capital:</div>
+                    <div class="account-capital-value" id="accountCapital">$10,000</div>
+                </div>
+                <div class="monthly-stats">
+                    <div class="monthly-label">Monthly stats:</div>
+                    <div class="monthly-values">
+                        <span class="profit-amount" id="monthlyProfit">$0</span>
+                        <span class="trading-days" id="tradingDays">0 days</span>
+                    </div>
+                </div>
+                <button class="settings-btn" onclick="openSettingsModal()">⚙️</button>
+            </div>
+        </div>
+        <div class="calendar-container">
+            <div class="calendar-main">
+                <div class="calendar-grid" id="calendar">
+                </div>
+            </div>
+            <div class="sidebar" id="sidebar">
+            </div>
+        </div>
+    </div>
+
+    <div class="growth-vision-section">
+        <h2 class="growth-vision-title">📈 Visión del Crecimiento Comercial</h2>
+
+        <div class="growth-metrics-grid">
+            <div class="growth-metric-card">
+                <div class="metric-label">Capital Inicial</div>
+                <div class="metric-value" id="initialCapitalDisplay">$5,000</div>
+                <div class="metric-change">Base de inicio</div>
+            </div>
+
+            <div class="growth-metric-card">
+                <div class="metric-label">Capital Actual</div>
+                <div class="metric-value" id="currentCapitalDisplay">$5,000</div>
+                <div class="metric-change" id="capitalChangeDisplay">+$0 (0%)</div>
+            </div>
+
+            <div class="growth-metric-card">
+                <div class="metric-label">Mejor Mes</div>
+                <div class="metric-value positive" id="bestMonthDisplay">$0</div>
+                <div class="metric-change" id="bestMonthDateDisplay">Sin datos</div>
+            </div>
+
+            <div class="growth-metric-card">
+                <div class="metric-label">Racha Actual</div>
+                <div class="metric-value" id="currentStreakDisplay">0 días</div>
+                <div class="metric-change" id="streakTypeDisplay">Sin racha</div>
+            </div>
+
+            <div class="growth-metric-card">
+                <div class="metric-label">Win Rate Total</div>
+                <div class="metric-value" id="totalWinRateDisplay">0%</div>
+                <div class="metric-change" id="totalTradesCountDisplay">0 trades totales</div>
+            </div>
+
+        </div>
+
+        <div class="growth-chart-container">
+            <div class="chart-title">Evolución del Capital</div>
+            <div class="growth-chart">
+                <svg class="chart-svg" id="growthChart">
+                </svg>
+            </div>
+        </div>
+
+        <div class="goals-section">
+            <div class="goal-card">
+                <div class="goal-header">
+                    <div class="goal-title">🎯 Meta Mensual</div>
+                    <div class="goal-progress" id="monthlyGoalProgress">0%</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar positive" id="monthlyGoalBar" style="width: 0%"></div>
+                </div>
+                <div class="goal-details" id="monthlyGoalDetails">
+                    Meta: $1,000 | Actual: $0 | Restante: $1,000
+                </div>
+            </div>
+
+            <div class="goal-card">
+                <div class="goal-header">
+                    <div class="goal-title">🏆 Meta Anual</div>
+                    <div class="goal-progress" id="yearlyGoalProgress">0%</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar positive" id="yearlyGoalBar" style="width: 0%"></div>
+                </div>
+                <div class="goal-details" id="yearlyGoalDetails">
+                    Meta: $12,000 | Actual: $0 | Restante: $12,000
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="tradeModal">
+        <div class="modal-content">
+            <h3 id="tradeModalTitle">Add Trade</h3>
+            <div class="input-group">
+                <label>Date:</label>
+                <input type="date" id="tradeDate" readonly>
+            </div>
+            <div class="input-group">
+                <label>Symbol (Currency Pair):</label>
+                <select id="tradeSymbol">
+                    <option value="">Select a currency pair</option>
+                    <option value="EURUSD">EURUSD</option>
+                    <option value="GBPUSD">GBPUSD</option>
+                    <option value="XAUUSD">XAUUSD</option>
+                    <option value="USDCAD">USDCAD</option>
+                    <option value="AUDUSD">AUDUSD</option>
+                    <option value="NZDUSD">NZDUSD</option>
+                    <option value="EURGBP">EURGBP</option>
+                    <option value="EURJPY">EURJPY</option>
+                    <option value="GBPJPY">GBPJPY</option>
+                    <option value="AUDJPY">AUDJPY</option>
+                    <option value="CHFJPY">CHFJPY</option>
+                    <option value="EURCHF">EURCHF</option>
+                    <option value="USDCHF">USDCHF</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Type:</label>
+                <select id="tradeType">
+                    <option value="buy">Buy</option>
+                    <option value="sell">Sell</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Profit/Loss ($):</label>
+                <input type="number" id="tradePnL" step="0.01" placeholder="e.g., 125.50">
+            </div>
+            <div class="input-group">
+                <label>Notes:</label>
+                <textarea id="tradeNotes" placeholder="Optional notes, paste image links here."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="deleteTradesBtn" style="display:none;"
+                    onclick="deleteAllTradesForDay()">Delete All Trades for this Day</button>
+                <button class="btn btn-secondary" onclick="closeModal('tradeModal')">Cancel</button>
+                <button class="btn btn-primary" id="saveTradeBtn" onclick="saveTrade()">Save Trade</button>
+            </div>
+            <div class="trades-list" id="tradesList">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>Settings</h3>
+            <div class="input-group">
+                <label>Capital Inicial de la Cuenta ($):</label>
+                <input type="number" id="initialAccountCapital" step="1" placeholder="e.g., 10000">
+            </div>
+            <div class="input-group">
+                <label>Meta Mensual ($):</label>
+                <input type="number" id="monthlyGoalInput" step="1" placeholder="e.g., 1000">
+            </div>
+            <div class="input-group">
+                <label>Meta Anual ($):</label>
+                <input type="number" id="yearlyGoalInput" step="1" placeholder="e.g., 12000">
+            </div>
+            <div class="settings-option">
+                <label for="darkModeToggle">Dark Mode</label>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="settings-option">
+                <label for="calendarSize">Calendar Size:</label>
+                <select id="calendarSize">
+                    <option value="large">Grande</option>
+                    <option value="normal">Normal</option>
+                    <option value="medium">Mediano</option>
+                    <option value="small">Pequeño</option>
+                    <option value="full-width">Ancho Completo</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <label for="cellSize">Cell Size:</label>
+                <select id="cellSize">
+                    <option value="extra-large">Extra Grande</option>
+                    <option value="large">Grande</option>
+                    <option value="medium">Mediano</option>
+                    <option value="small">Pequeño (Normal)</option>
+                    <option value="extra-small">Extra Pequeño</option>
+                </select>
+            </div>
+            <div class="withdrawal-section">
+                <h4>Withdrawals</h4>
+                <div class="withdrawal-form">
+                    <input type="number" id="withdrawalAmount" step="0.01" placeholder="Amount to withdraw">
+                    <button class="btn btn-danger" onclick="makeWithdrawal()">Withdraw</button>
+                </div>
+                <div class="withdrawal-controls">
+                    <h5>Withdrawal History:</h5>
+                    <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.8rem;"
+                        onclick="clearWithdrawalHistory()">Clear History</button>
+                </div>
+                <div class="withdrawal-history" id="withdrawalHistory">
+                </div>
+            </div>
+            <p style="margin-top: 30px;">More settings will be added here:</p>
+            <ul>
+                <li>Manage Trade Categories</li>
+                <li>Export Data</li>
+                <li>Import Data</li>
+            </ul>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Close</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="weekSummaryModal">
+        <div class="modal-content">
+            <h3 id="weekSummaryModalTitle">Week Summary</h3>
+            <div id="weekSummaryDetails">
+                <p><span class="label">Total Profit:</span> <span class="value" id="modalWeekProfit"></span></p>
+                <p><span class="label">Trading Days:</span> <span class="value" id="modalWeekDays"></span></p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('weekSummaryModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let accountCapital = parseFloat(localStorage.getItem('accountCapital')) || 10000;
+        let trades = JSON.parse(localStorage.getItem('trades')) || {};
+        let withdrawals = JSON.parse(localStorage.getItem('withdrawals')) || [];
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        let calendarDisplaySize = localStorage.getItem('calendarDisplaySize') || 'normal';
+        let cellSize = localStorage.getItem('cellSize') || 'small'; // Default cell size
+
+        // --- NUEVAS VARIABLES PARA LA VISIÓN DE CRECIMIENTO ---
+        let initialAccountCapital = parseFloat(localStorage.getItem('initialAccountCapital')) || 10000;
+        let monthlyGoal = parseFloat(localStorage.getItem('monthlyGoal')) || 1000; // Cargando desde localStorage
+        let yearlyGoal = parseFloat(localStorage.getItem('yearlyGoal')) || 12000; // Cargando desde localStorage
+        // --- FIN NUEVAS VARIABLES ---
+
+
+        function saveData() {
+            localStorage.setItem('accountCapital', accountCapital.toFixed(2));
+            localStorage.setItem('trades', JSON.stringify(trades));
+            localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+            localStorage.setItem('darkMode', isDarkMode);
+            localStorage.setItem('calendarDisplaySize', calendarDisplaySize);
+            localStorage.setItem('cellSize', cellSize);
+            // Guarda las nuevas variables de crecimiento
+            localStorage.setItem('initialAccountCapital', initialAccountCapital.toFixed(2));
+            localStorage.setItem('monthlyGoal', monthlyGoal.toFixed(2)); // Guardando la meta mensual
+            localStorage.setItem('yearlyGoal', yearlyGoal.toFixed(2)); // Guardando la meta anual
+        }
+
+        function loadData() {
+            accountCapital = parseFloat(localStorage.getItem('accountCapital')) || 10000;
+            trades = JSON.parse(localStorage.getItem('trades')) || {};
+            withdrawals = JSON.parse(localStorage.getItem('withdrawals')) || [];
+            isDarkMode = localStorage.getItem('darkMode') === 'true';
+            calendarDisplaySize = localStorage.getItem('calendarDisplaySize') || 'normal';
+            cellSize = localStorage.getItem('cellSize') || 'small';
+
+            // Carga las nuevas variables de crecimiento
+            initialAccountCapital = parseFloat(localStorage.getItem('initialAccountCapital')) || 10000;
+            monthlyGoal = parseFloat(localStorage.getItem('monthlyGoal')) || 1000;
+            yearlyGoal = parseFloat(localStorage.getItem('yearlyGoal')) || 12000;
+
+            applyDarkMode();
+            applyCalendarSize();
+            applyCellSize();
+        }
+
+        function applyDarkMode() {
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            document.getElementById('darkModeToggle').checked = isDarkMode;
+        }
+
+        function applyCalendarSize() {
+            const container = document.querySelector('.container');
+            container.style.maxWidth = 'initial'; // Reset to allow dynamic sizing
+
+            // Remove all calendar size classes
+            ['calendar-size-extra-small', 'calendar-size-small', 'calendar-size-medium', 'calendar-size-large', 'calendar-size-extra-large', 'calendar-size-normal', 'calendar-size-full-width'].forEach(cls => {
+                container.classList.remove(cls);
+            });
+
+            // Apply the selected class
+            if (calendarDisplaySize === 'full-width') {
+                container.style.maxWidth = 'none'; // Overrides max-width to be full width
+            } else {
+                container.classList.add(`calendar-size-${calendarDisplaySize}`);
+                // Set fixed max-width for non-full-width options based on what 'normal' implied
+                if (calendarDisplaySize === 'normal') {
+                    container.style.maxWidth = '1200px'; // Revert to a sensible default if 'normal' is selected
+                } else if (calendarDisplaySize === 'large') {
+                    container.style.maxWidth = '1400px'; // Example
+                } else if (calendarDisplaySize === 'medium') {
+                    container.style.maxWidth = '1000px'; // Example
+                } else if (calendarDisplaySize === 'small') {
+                    container.style.maxWidth = '800px'; // Example
+                }
+                // For other specific sizes, you might want to adjust max-width in CSS directly for that class.
+            }
+            document.getElementById('calendarSize').value = calendarDisplaySize;
+            generateCalendar(); // Regenerate calendar to apply new size to cells if needed
+        }
+
+
+        function applyCellSize() {
+            const calendarGrid = document.getElementById('calendar');
+            // Remove all existing cell size classes
+            ['calendar-size-extra-small', 'calendar-size-small', 'calendar-size-medium', 'calendar-size-large', 'calendar-size-extra-large'].forEach(cls => {
+                calendarGrid.classList.remove(cls);
+            });
+            // Add the selected cell size class
+            calendarGrid.classList.add(`calendar-size-${cellSize}`);
+            document.getElementById('cellSize').value = cellSize;
+        }
+
+        function generateCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendarEl.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleString('es-ES', {
+                month: 'long',
+                year: 'numeric'
+            });
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 for Sunday, 1 for Monday...
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+            dayNames.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.classList.add('day-header');
+                dayHeader.textContent = day;
+                calendarEl.appendChild(dayHeader);
+            });
+
+            // Fill empty cells for days before the 1st
+            const startDayIndex = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1; // Adjust for Monday start
+
+            for (let i = 0; i < startDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.classList.add('day-cell', 'other-month');
+                calendarEl.appendChild(emptyCell);
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const day = new Date(year, month, i);
+                const dayString = day.toISOString().split('T')[0];
+                const dayTrades = trades[dayString] || [];
+                const dailyPnL = dayTrades.reduce((sum, trade) => sum + trade.pnl, 0);
+
+                const dayCell = document.createElement('div');
+                dayCell.classList.add('day-cell');
+                dayCell.setAttribute('data-date', dayString);
+
+                if (dailyPnL > 0) {
+                    dayCell.classList.add('profit-positive');
+                } else if (dailyPnL < 0) {
+                    dayCell.classList.add('profit-negative');
+                } else if (dayTrades.length > 0) { // If there are trades but PnL is 0
+                    dayCell.classList.add('no-trades'); // Use a neutral style or 'no-trades'
+                }
+
+                const dayNumberEl = document.createElement('div');
+                dayNumberEl.classList.add('day-number');
+                dayNumberEl.textContent = i;
+                if (day.toDateString() === new Date().toDateString()) {
+                    dayNumberEl.classList.add('today');
+                }
+                dayCell.appendChild(dayNumberEl);
+
+                if (dayTrades.length > 0) {
+                    const profitDisplay = document.createElement('div');
+                    profitDisplay.classList.add('profit-display');
+                    profitDisplay.textContent = `$${dailyPnL.toFixed(2)}`;
+                    if (dailyPnL === 0) {
+                        profitDisplay.classList.add('neutral');
+                    }
+                    dayCell.appendChild(profitDisplay);
+
+                    const tradeInfo = document.createElement('div');
+                    tradeInfo.classList.add('trade-info');
+                    const wins = dayTrades.filter(t => t.pnl > 0).length;
+                    const losses = dayTrades.filter(t => t.pnl < 0).length;
+                    const total = dayTrades.length;
+                    const winRate = total > 0 ? (wins / total * 100).toFixed(0) : 0;
+                    tradeInfo.innerHTML = `${total} trades <span class="win-rate">(${winRate}%)</span>`;
+                    dayCell.appendChild(tradeInfo);
+                }
+
+                dayCell.onclick = () => openTradeModal(dayString);
+                calendarEl.appendChild(dayCell);
+            }
+            updateMonthlyStats();
+            generateWeeklySummaries();
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar();
+        }
+
+        function thisMonth() {
+            currentDate = new Date();
+            generateCalendar();
+        }
+
+        function updateMonthlyStats() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            let totalProfitMonth = 0;
+            let tradingDaysCount = 0;
+
+            for (const date in trades) {
+                const tradeDate = new Date(date);
+                if (tradeDate.getFullYear() === year && tradeDate.getMonth() === month) {
+                    const dailyPnL = trades[date].reduce((sum, trade) => sum + trade.pnl, 0);
+                    totalProfitMonth += dailyPnL;
+                    if (trades[date].length > 0) {
+                        tradingDaysCount++;
+                    }
+                }
+            }
+
+            const monthlyProfitEl = document.getElementById('monthlyProfit');
+            monthlyProfitEl.textContent = `$${totalProfitMonth.toFixed(2)}`;
+            monthlyProfitEl.classList.remove('positive', 'negative', 'neutral');
+            if (totalProfitMonth > 0) {
+                monthlyProfitEl.classList.add('positive');
+            } else if (totalProfitMonth < 0) {
+                monthlyProfitEl.classList.add('negative');
+            } else {
+                monthlyProfitEl.classList.add('neutral');
+            }
+            document.getElementById('tradingDays').textContent = `${tradingDaysCount} days`;
+        }
+
+        function updateAccountCapitalDisplay() {
+            document.getElementById('accountCapital').textContent = `$${accountCapital.toFixed(2)}`;
+        }
+
+        function generateWeeklySummaries() {
+            const sidebarEl = document.getElementById('sidebar');
+            sidebarEl.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+
+            let weekData = {};
+
+            for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) {
+                const weekNumber = getWeekNumber(d);
+                const dayString = d.toISOString().split('T')[0];
+
+                if (!weekData[weekNumber]) {
+                    weekData[weekNumber] = {
+                        profit: 0,
+                        tradingDays: 0,
+                        startDate: new Date(d),
+                        endDate: new Date(d)
+                    };
+                }
+                const dailyTrades = trades[dayString] || [];
+                if (dailyTrades.length > 0) {
+                    weekData[weekNumber].profit += dailyTrades.reduce((sum, trade) => sum + trade.pnl, 0);
+                    weekData[weekNumber].tradingDays++;
+                }
+                weekData[weekNumber].endDate = new Date(d); // Update end date
+            }
+
+            for (const weekNum in weekData) {
+                const week = weekData[weekNum];
+                const weekSummaryEl = document.createElement('div');
+                weekSummaryEl.classList.add('week-summary');
+                weekSummaryEl.onclick = () => openWeekSummaryModal(week);
+
+                const startDateFormatted = week.startDate.toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short'
+                });
+                const endDateFormatted = week.endDate.toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short'
+                });
+
+                weekSummaryEl.innerHTML = `
+                    <div class="week-header">Semana ${weekNum}: ${startDateFormatted} - ${endDateFormatted}</div>
+                    <div class="week-profit ${week.profit > 0 ? 'positive' : (week.profit < 0 ? 'negative' : 'neutral')}">$${week.profit.toFixed(2)}</div>
+                    <div class="week-days">${week.tradingDays} días de trading</div>
+                `;
+                sidebarEl.appendChild(weekSummaryEl);
+            }
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            // Set to nearest Thursday: current date + 4 - current day number
+            // Make Sunday's day number 7 to make Monday 1
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            // Get first day of year
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            // Calculate full weeks to the nearest Thursday
+            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return weekNo;
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        let currentTradeDate = ''; // Global variable to store the date of the currently open trade modal
+
+        function openTradeModal(date) {
+            currentTradeDate = date;
+            const tradesForDay = trades[date] || [];
+
+            document.getElementById('tradeModalTitle').textContent = `Trades for ${new Date(date).toLocaleDateString('es-ES')}`;
+            document.getElementById('tradeDate').value = date;
+            document.getElementById('tradePnL').value = '';
+            document.getElementById('tradeSymbol').value = '';
+            document.getElementById('tradeType').value = 'buy';
+            document.getElementById('tradeNotes').value = '';
+
+            const deleteTradesBtn = document.getElementById('deleteTradesBtn');
+            deleteTradesBtn.style.display = tradesForDay.length > 0 ? 'block' : 'none';
+
+            displayTradesList(tradesForDay);
+            openModal('tradeModal');
+        }
+
+        function displayTradesList(tradesArray) {
+            const tradesListEl = document.getElementById('tradesList');
+            tradesListEl.innerHTML = '';
+
+            if (tradesArray.length === 0) {
+                tradesListEl.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No trades for this day yet.</p>';
+                return;
+            }
+
+            tradesArray.forEach((trade, index) => {
+                const tradeItem = document.createElement('div');
+                tradeItem.classList.add('trade-item');
+
+                const pnlClass = trade.pnl > 0 ? 'positive' : (trade.pnl < 0 ? 'negative' : 'neutral');
+
+                let notesHtml = trade.notes;
+                // Regex to find image URLs
+                const imageUrlRegex = /(https?:\/\/[^\s]+\.(?:png|jpe?g|gif|bmp|svg|webp))(?:\s|$)/gi;
+                notesHtml = notesHtml.replace(imageUrlRegex, (match) => {
+                    return `<img src="${match.trim()}" alt="Trade Image" loading="lazy">`;
+                });
+                // Convert remaining links to clickable links
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                notesHtml = notesHtml.replace(urlRegex, (match) => {
+                    // Check if it's already an img tag to avoid double-wrapping
+                    if (!match.includes('<img src=')) {
+                        return `<a href="${match.trim()}" target="_blank" rel="noopener noreferrer">${match.trim()}</a>`;
+                    }
+                    return match;
+                });
+
+
+                tradeItem.innerHTML = `
+                    <div class="trade-item-header">
+                        <span>${trade.symbol || 'N/A'} - ${trade.type.charAt(0).toUpperCase() + trade.type.slice(1)}</span>
+                        <span class="trade-item-pnl ${pnlClass}">$${trade.pnl.toFixed(2)}</span>
+                    </div>
+                    ${trade.notes ? `<div class="trade-item-notes">${notesHtml}</div>` : ''}
+                    <div class="trade-item-actions">
+                        <button class="btn btn-secondary" onclick="editTrade(${index})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteSingleTrade(${index})">Delete</button>
+                    </div>
+                `;
+                tradesListEl.appendChild(tradeItem);
+            });
+        }
+
+        let editingTradeIndex = -1; // -1 means no trade is being edited
+
+        function saveTrade() {
+            const date = document.getElementById('tradeDate').value;
+            const symbol = document.getElementById('tradeSymbol').value;
+            const type = document.getElementById('tradeType').value;
+            const pnl = parseFloat(document.getElementById('tradePnL').value);
+            const notes = document.getElementById('tradeNotes').value;
+
+            if (!date || isNaN(pnl)) {
+                alert('Please enter a valid date and Profit/Loss.');
+                return;
+            }
+
+            if (!trades[date]) {
+                trades[date] = [];
+            }
+
+            // Calculate account capital change only if it's a new trade or pnl changed
+            let pnlDifference = pnl; // For new trade, difference is just the pnl
+
+            if (editingTradeIndex !== -1) {
+                // If editing, calculate the difference from the original PnL
+                const originalPnl = trades[date][editingTradeIndex].pnl;
+                pnlDifference = pnl - originalPnl;
+                trades[date][editingTradeIndex] = {
+                    symbol,
+                    type,
+                    pnl,
+                    notes
+                };
+                editingTradeIndex = -1; // Reset editing state
+            } else {
+                trades[date].push({
+                    symbol,
+                    type,
+                    pnl,
+                    notes
+                });
+            }
+
+            accountCapital += pnlDifference;
+
+            saveData();
+            generateCalendar();
+            updateAccountCapitalDisplay();
+            updateMonthlyStats();
+            generateWeeklySummaries();
+            closeModal('tradeModal');
+            // --- ACTUALIZAR MÉTRICAS DE CRECIMIENTO ---
+            updateGrowthMetrics();
+            // --- FIN ACTUALIZAR ---
+        }
+
+        function editTrade(index) {
+            const date = document.getElementById('tradeDate').value;
+            const tradeToEdit = trades[date][index];
+
+            document.getElementById('tradeSymbol').value = tradeToEdit.symbol;
+            document.getElementById('tradeType').value = tradeToEdit.type;
+            document.getElementById('tradePnL').value = tradeToEdit.pnl;
+            document.getElementById('tradeNotes').value = tradeToEdit.notes;
+
+            editingTradeIndex = index; // Set the index of the trade being edited
+            document.getElementById('tradeModalTitle').textContent = `Edit Trade for ${new Date(date).toLocaleDateString('es-ES')}`;
+            document.getElementById('deleteTradesBtn').style.display = 'none'; // Hide delete all button when editing
+        }
+
+        function deleteSingleTrade(index) {
+            if (!confirm('Are you sure you want to delete this trade?')) {
+                return;
+            }
+
+            const date = document.getElementById('tradeDate').value;
+            const pnlOfDeletedTrade = trades[date][index].pnl;
+
+            trades[date].splice(index, 1);
+
+            // If no more trades for the day, remove the date entry
+            if (trades[date].length === 0) {
+                delete trades[date];
+            }
+
+            accountCapital -= pnlOfDeletedTrade; // Revert capital change
+
+            saveData();
+            generateCalendar();
+            updateAccountCapitalDisplay();
+            updateMonthlyStats();
+            generateWeeklySummaries();
+            // --- ACTUALIZAR MÉTRICAS DE CRECIMIENTO ---
+            updateGrowthMetrics();
+            // --- FIN ACTUALIZAR ---
+            // Re-open modal to show updated list or close if no trades left
+            if (Object.keys(trades).includes(date)) {
+                openTradeModal(date);
+            } else {
+                closeModal('tradeModal');
+            }
+        }
+
+
+        function deleteAllTradesForDay() {
+            if (!confirm('Are you sure you want to delete ALL trades for this day?')) {
+                return;
+            }
+
+            const date = document.getElementById('tradeDate').value;
+            const dailyPnL = trades[date].reduce((sum, trade) => sum + trade.pnl, 0);
+
+            accountCapital -= dailyPnL; // Revert capital change
+
+            delete trades[date]; // Remove all trades for the day
+
+            saveData();
+            generateCalendar();
+            updateAccountCapitalDisplay();
+            updateMonthlyStats();
+            generateWeeklySummaries();
+            closeModal('tradeModal');
+            // --- ACTUALIZAR MÉTRICAS DE CRECIMIENTO ---
+            updateGrowthMetrics();
+            // --- FIN ACTUALIZAR ---
+        }
+
+
+        function deleteCurrentMonthTrades() {
+            if (!confirm('Are you sure you want to delete ALL trades for the current month? This action cannot be undone.')) {
+                return;
+            }
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            let totalProfitRemoved = 0;
+            const datesToRemove = [];
+
+            for (const date in trades) {
+                const tradeDate = new Date(date);
+                if (tradeDate.getFullYear() === year && tradeDate.getMonth() === month) {
+                    totalProfitRemoved += trades[date].reduce((sum, trade) => sum + trade.pnl, 0);
+                    datesToRemove.push(date);
+                }
+            }
+
+            datesToRemove.forEach(date => {
+                delete trades[date];
+            });
+
+            accountCapital -= totalProfitRemoved;
+
+            saveData();
+            generateCalendar(); // Regenerate calendar for the current month
+            updateAccountCapitalDisplay();
+            updateMonthlyStats();
+            generateWeeklySummaries();
+            // --- ACTUALIZAR MÉTRICAS DE CRECIMIENTO ---
+            updateGrowthMetrics();
+            // --- FIN ACTUALIZAR ---
+        }
+
+
+        function openSettingsModal() {
+            document.getElementById('initialAccountCapital').value = initialAccountCapital;
+            document.getElementById('monthlyGoalInput').value = monthlyGoal; // Cargar valor de meta mensual
+            document.getElementById('yearlyGoalInput').value = yearlyGoal; // Cargar valor de meta anual
+            document.getElementById('darkModeToggle').checked = isDarkMode;
+            document.getElementById('calendarSize').value = calendarDisplaySize;
+            document.getElementById('cellSize').value = cellSize;
+            displayWithdrawalHistory();
+            openModal('settingsModal');
+        }
+
+
+        function saveSettings() {
+            // Update initial account capital
+            const newInitialCapital = parseFloat(document.getElementById('initialAccountCapital').value);
+            if (!isNaN(newInitialCapital) && newInitialCapital !== initialAccountCapital) {
+                // Calculate difference and adjust accountCapital if initial capital changes
+                const capitalDifference = newInitialCapital - initialAccountCapital;
+                accountCapital += capitalDifference;
+                initialAccountCapital = newInitialCapital; // Update the stored initial capital
+                updateAccountCapitalDisplay();
+            }
+
+            // Update monthly goal
+            const newMonthlyGoal = parseFloat(document.getElementById('monthlyGoalInput').value);
+            if (!isNaN(newMonthlyGoal)) {
+                monthlyGoal = newMonthlyGoal;
+            }
+
+            // Update yearly goal
+            const newYearlyGoal = parseFloat(document.getElementById('yearlyGoalInput').value);
+            if (!isNaN(newYearlyGoal)) {
+                yearlyGoal = newYearlyGoal;
+            }
+
+
+            // Update Dark Mode
+            isDarkMode = document.getElementById('darkModeToggle').checked;
+            applyDarkMode();
+
+            // Update Calendar Size
+            const selectedCalendarSize = document.getElementById('calendarSize').value;
+            if (selectedCalendarSize !== calendarDisplaySize) {
+                calendarDisplaySize = selectedCalendarSize;
+                applyCalendarSize();
+            }
+
+            // Update Cell Size
+            const selectedCellSize = document.getElementById('cellSize').value;
+            if (selectedCellSize !== cellSize) {
+                cellSize = selectedCellSize;
+                applyCellSize();
+            }
+
+            saveData();
+            // --- ACTUALIZAR MÉTRICAS DE CRECIMIENTO ---
+            updateGrowthMetrics();
+            // --- FIN ACTUALIZAR ---
+            closeModal('settingsModal');
+        }
+
+
+        function makeWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid withdrawal amount.');
+                return;
+            }
+            if (amount > accountCapital) {
+                alert('Withdrawal amount exceeds current account capital.');
+                return;
+            }
+
+            accountCapital -= amount;
+            withdrawals.push({
+                amount: amount,
+                date: new Date().toISOString().split('T')[0]
+            });
+            document.getElementById('withdrawalAmount').value = ''; // Clear input
+
+            saveData();
+            updateAccountCapitalDisplay();
+            displayWithdrawalHistory();
+            // --- ACTUALIZAR MÉTRICAS DE CRECIMIENTO ---
+            updateGrowthMetrics();
+            // --- FIN ACTUALIZAR ---
+        }
+
+        function displayWithdrawalHistory() {
+            const historyEl = document.getElementById('withdrawalHistory');
+            historyEl.innerHTML = '';
+            if (withdrawals.length === 0) {
+                historyEl.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No withdrawals yet.</p>';
+                return;
+            }
+            withdrawals.forEach(w => {
+                const item = document.createElement('div');
+                item.classList.add('withdrawal-item');
+                item.innerHTML = `
+                    <span>${new Date(w.date).toLocaleDateString('es-ES')}</span>
+                    <span class="withdrawal-amount">-$${w.amount.toFixed(2)}</span>
+                `;
+                historyEl.appendChild(item);
+            });
+            historyEl.scrollTop = historyEl.scrollHeight; // Scroll to bottom
+        }
+
+        function clearWithdrawalHistory() {
+            if (confirm('Are you sure you want to clear all withdrawal history? This will NOT refund the capital.')) {
+                withdrawals = [];
+                saveData();
+                displayWithdrawalHistory();
+            }
+        }
+
+        function openWeekSummaryModal(week) {
+            document.getElementById('weekSummaryModalTitle').textContent = `Resumen de Semana ${getWeekNumber(week.startDate)}`;
+            document.getElementById('modalWeekProfit').textContent = `$${week.profit.toFixed(2)}`;
+            document.getElementById('modalWeekProfit').className = `value profit-value ${week.profit > 0 ? 'positive' : (week.profit < 0 ? 'negative' : 'neutral')}`;
+            document.getElementById('modalWeekDays').textContent = week.tradingDays;
+            openModal('weekSummaryModal');
+        }
+
+
+        // --- FUNCIONES PARA LA VISIÓN DE CRECIMIENTO ---
+        function updateGrowthMetrics() {
+            const currentCapitalDisplay = document.getElementById('currentCapitalDisplay');
+            const initialCapitalDisplay = document.getElementById('initialCapitalDisplay');
+            const capitalChangeDisplay = document.getElementById('capitalChangeDisplay');
+
+            initialCapitalDisplay.textContent = `$${initialAccountCapital.toFixed(2)}`;
+            currentCapitalDisplay.textContent = `$${accountCapital.toFixed(2)}`;
+
+            const capitalChange = accountCapital - initialAccountCapital;
+            const percentageChange = initialAccountCapital !== 0 ? (capitalChange / initialAccountCapital * 100).toFixed(2) : 0;
+            capitalChangeDisplay.textContent = `${capitalChange >= 0 ? '+' : ''}$${capitalChange.toFixed(2)} (${percentageChange}%)`;
+            capitalChangeDisplay.classList.remove('positive', 'negative', 'neutral');
+            if (capitalChange > 0) {
+                capitalChangeDisplay.classList.add('positive');
+            } else if (capitalChange < 0) {
+                capitalChangeDisplay.classList.add('negative');
+            } else {
+                capitalChangeDisplay.classList.add('neutral');
+            }
+
+            updateBestMonth();
+            updateCurrentStreak();
+            updateTotalWinRate();
+            updateGoals();
+            updateGrowthChart();
+        }
+
+        function updateBestMonth() {
+            let bestMonthProfit = -Infinity;
+            let bestMonthDate = 'Sin datos';
+
+            const monthlyProfits = {}; // { 'YYYY-MM': totalPnL }
+
+            for (const dateString in trades) {
+                const date = new Date(dateString);
+                const yearMonth = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                const dailyPnL = trades[dateString].reduce((sum, trade) => sum + trade.pnl, 0);
+
+                if (!monthlyProfits[yearMonth]) {
+                    monthlyProfits[yearMonth] = 0;
+                }
+                monthlyProfits[yearMonth] += dailyPnL;
+            }
+
+            for (const yearMonth in monthlyProfits) {
+                if (monthlyProfits[yearMonth] > bestMonthProfit) {
+                    bestMonthProfit = monthlyProfits[yearMonth];
+                    const [year, month] = yearMonth.split('-');
+                    bestMonthDate = new Date(year, parseInt(month) - 1).toLocaleString('es-ES', {
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                }
+            }
+
+            const bestMonthDisplay = document.getElementById('bestMonthDisplay');
+            const bestMonthDateDisplay = document.getElementById('bestMonthDateDisplay');
+
+            if (bestMonthProfit === -Infinity) {
+                bestMonthDisplay.textContent = `$0`;
+                bestMonthDisplay.classList.add('neutral');
+                bestMonthDateDisplay.textContent = 'Sin datos';
+            } else {
+                bestMonthDisplay.textContent = `$${bestMonthProfit.toFixed(2)}`;
+                bestMonthDisplay.classList.remove('positive', 'negative', 'neutral');
+                if (bestMonthProfit > 0) {
+                    bestMonthDisplay.classList.add('positive');
+                } else if (bestMonthProfit < 0) {
+                    bestMonthDisplay.classList.add('negative');
+                } else {
+                    bestMonthDisplay.classList.add('neutral');
+                }
+                bestMonthDateDisplay.textContent = bestMonthDate;
+            }
+        }
+
+        function updateCurrentStreak() {
+            let currentStreak = 0;
+            let streakType = 'Sin racha'; // 'Ganadora', 'Perdedora', 'Sin racha'
+            let lastDayOutcome = null; // 'win', 'loss', 'neutral'
+
+            const sortedDates = Object.keys(trades).sort();
+
+            for (let i = 0; i < sortedDates.length; i++) {
+                const date = sortedDates[i];
+                const dailyPnL = trades[date].reduce((sum, trade) => sum + trade.pnl, 0);
+
+                let currentDayOutcome;
+                if (dailyPnL > 0) {
+                    currentDayOutcome = 'win';
+                } else if (dailyPnL < 0) {
+                    currentDayOutcome = 'loss';
+                } else {
+                    currentDayOutcome = 'neutral';
+                }
+
+                if (i === 0) {
+                    // First trading day
+                    lastDayOutcome = currentDayOutcome;
+                    if (currentDayOutcome === 'win' || currentDayOutcome === 'loss') {
+                        currentStreak = 1;
+                        streakType = currentDayOutcome === 'win' ? 'Ganadora' : 'Perdedora';
+                    }
+                } else {
+                    // Check for consecutive days
+                    const prevDate = new Date(sortedDates[i - 1]);
+                    const currDate = new Date(date);
+                    const diffTime = Math.abs(currDate - prevDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 1) { // If it's the very next day
+                        if (currentDayOutcome === lastDayOutcome && (currentDayOutcome === 'win' || currentDayOutcome === 'loss')) {
+                            currentStreak++;
+                        } else {
+                            // Streak broken or changed type
+                            currentStreak = 1; // Start new streak
+                            streakType = currentDayOutcome === 'win' ? 'Ganadora' : (currentDayOutcome === 'loss' ? 'Perdedora' : 'Sin racha');
+                        }
+                    } else { // Gap between trading days
+                        currentStreak = 1; // Start new streak
+                        streakType = currentDayOutcome === 'win' ? 'Ganadora' : (currentDayOutcome === 'loss' ? 'Perdedora' : 'Sin racha');
+                    }
+                    lastDayOutcome = currentDayOutcome;
+                }
+            }
+
+            document.getElementById('currentStreakDisplay').textContent = `${currentStreak} días`;
+            document.getElementById('streakTypeDisplay').textContent = streakType;
+
+            const streakMetricCard = document.querySelector('#currentStreakDisplay').closest('.growth-metric-card');
+            streakMetricCard.classList.remove('positive', 'negative');
+            if (streakType === 'Ganadora') {
+                streakMetricCard.classList.add('positive');
+            } else if (streakType === 'Perdedora') {
+                streakMetricCard.classList.add('negative');
+            }
+        }
+
+
+        function updateTotalWinRate() {
+            let totalWins = 0;
+            let totalLosses = 0;
+            let totalBreakeven = 0;
+            let totalTrades = 0;
+
+            for (const date in trades) {
+                trades[date].forEach(trade => {
+                    totalTrades++;
+                    if (trade.pnl > 0) {
+                        totalWins++;
+                    } else if (trade.pnl < 0) {
+                        totalLosses++;
+                    } else {
+                        totalBreakeven++;
+                    }
+                });
+            }
+
+            const winRate = totalTrades > 0 ? (totalWins / totalTrades * 100).toFixed(2) : 0;
+
+            document.getElementById('totalWinRateDisplay').textContent = `${winRate}%`;
+            document.getElementById('totalTradesCountDisplay').textContent = `${totalTrades} trades totales`;
+
+            // Adjust card color based on win rate (e.g., above 50% positive, below negative)
+            const winRateCard = document.querySelector('#totalWinRateDisplay').closest('.growth-metric-card');
+            winRateCard.classList.remove('positive', 'negative', 'neutral');
+            if (winRate > 50) {
+                winRateCard.classList.add('positive');
+            } else if (winRate < 50 && totalTrades > 0) {
+                winRateCard.classList.add('negative');
+            } else {
+                winRateCard.classList.add('neutral');
+            }
+        }
+
+        function updateGoals() {
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
+
+            // Calculate monthly profit for current month
+            let currentMonthProfit = 0;
+            for (const dateString in trades) {
+                const tradeDate = new Date(dateString);
+                if (tradeDate.getFullYear() === currentYear && tradeDate.getMonth() === currentMonth) {
+                    currentMonthProfit += trades[dateString].reduce((sum, trade) => sum + trade.pnl, 0);
+                }
+            }
+
+            // Calculate yearly profit (from January 1st of current year to current date)
+            let currentYearProfit = 0;
+            const startOfYear = new Date(currentYear, 0, 1);
+            for (const dateString in trades) {
+                const tradeDate = new Date(dateString);
+                if (tradeDate >= startOfYear && tradeDate <= currentDate) {
+                    currentYearProfit += trades[dateString].reduce((sum, trade) => sum + trade.pnl, 0);
+                }
+            }
+
+            // Monthly Goal
+            const monthlyProgress = monthlyGoal !== 0 ? ((currentMonthProfit / monthlyGoal) * 100) : 0;
+            const monthlyRemaining = monthlyGoal - currentMonthProfit;
+            document.getElementById('monthlyGoalProgress').textContent = `${Math.min(100, monthlyProgress).toFixed(0)}%`;
+            document.getElementById('monthlyGoalBar').style.width = `${Math.min(100, monthlyProgress)}%`;
+            document.getElementById('monthlyGoalBar').classList.toggle('positive', currentMonthProfit >= 0);
+            document.getElementById('monthlyGoalBar').classList.toggle('negative', currentMonthProfit < 0);
+            document.getElementById('monthlyGoalDetails').textContent = `Meta: $${monthlyGoal.toFixed(2)} | Actual: $${currentMonthProfit.toFixed(2)} | Restante: $${monthlyRemaining.toFixed(2)}`;
+
+            // Yearly Goal
+            const yearlyProgress = yearlyGoal !== 0 ? ((currentYearProfit / yearlyGoal) * 100) : 0;
+            const yearlyRemaining = yearlyGoal - currentYearProfit;
+            document.getElementById('yearlyGoalProgress').textContent = `${Math.min(100, yearlyProgress).toFixed(0)}%`;
+            document.getElementById('yearlyGoalBar').style.width = `${Math.min(100, yearlyProgress)}%`;
+            document.getElementById('yearlyGoalBar').classList.toggle('positive', currentYearProfit >= 0);
+            document.getElementById('yearlyGoalBar').classList.toggle('negative', currentYearProfit < 0);
+            document.getElementById('yearlyGoalDetails').textContent = `Meta: $${yearlyGoal.toFixed(2)} | Actual: $${currentYearProfit.toFixed(2)} | Restante: $${yearlyRemaining.toFixed(2)}`;
+        }
+
+        function updateGrowthChart() {
+            const svg = document.getElementById('growthChart');
+            svg.innerHTML = ''; // Clear previous chart elements
+
+            const allDates = Object.keys(trades).sort();
+            if (allDates.length === 0) {
+                // Display a message or simply an empty chart
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", "50%");
+                text.setAttribute("y", "50%");
+                text.setAttribute("dominant-baseline", "middle");
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-size", "1.2rem");
+                text.setAttribute("fill", "var(--text-secondary)");
+                text.textContent = "No hay datos de operaciones para mostrar el gráfico.";
+                svg.appendChild(text);
+                return;
+            }
+
+            const chartWidth = svg.clientWidth;
+            const chartHeight = svg.clientHeight;
+            const padding = 40; // Padding for axes
+
+            // Calculate daily cumulative profit
+            let cumulativeProfits = {};
+            let currentCumulative = initialAccountCapital;
+
+            // Generate all dates from the first trade to the last trade
+            const firstDate = new Date(allDates[0]);
+            const lastDate = new Date(allDates[allDates.length - 1]);
+            const dateRange = [];
+            for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
+                dateRange.push(d.toISOString().split('T')[0]);
+            }
+
+            dataPoints = dateRange.map(date => {
+                const dailyPnL = (trades[date] || []).reduce((sum, trade) => sum + trade.pnl, 0);
+                currentCumulative += dailyPnL;
+                return {
+                    date: new Date(date),
+                    value: currentCumulative
+                };
+            });
+
+            // If the first date with trades is not the earliest date in dataPoints, add initial capital point
+            if (dataPoints.length > 0 && dataPoints[0].date.toISOString().split('T')[0] !== new Date(allDates[0]).toISOString().split('T')[0]) {
+                dataPoints.unshift({
+                    date: new Date(allDates[0]),
+                    value: initialAccountCapital
+                });
+            } else if (dataPoints.length === 0) { // If no trades at all, just show initial capital
+                dataPoints.push({
+                    date: new Date(), // Use current date as placeholder
+                    value: initialAccountCapital
+                });
+            }
+
+
+            const allValues = dataPoints.map(p => p.value);
+            const minValue = Math.min(...allValues, initialAccountCapital);
+            const maxValue = Math.max(...allValues, initialAccountCapital);
+
+            // Scales
+            const xScale = (value) => {
+                const first = dataPoints[0].date.getTime();
+                const last = dataPoints[dataPoints.length - 1].date.getTime();
+                // Avoid division by zero if only one data point
+                if (first === last) return chartWidth / 2;
+                return padding + (value.getTime() - first) / (last - first) * (chartWidth - 2 * padding);
+            };
+
+            const yScale = (value) => {
+                // Avoid division by zero if min and max values are the same
+                if (maxValue === minValue) return chartHeight / 2;
+                return chartHeight - padding - (value - minValue) / (maxValue - minValue) * (chartHeight - 2 * padding);
+            };
+
+            // Draw X Axis (Dates)
+            const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            xAxis.setAttribute("x1", padding);
+            xAxis.setAttribute("y1", chartHeight - padding);
+            xAxis.setAttribute("x2", chartWidth - padding);
+            xAxis.setAttribute("y2", chartHeight - padding);
+            xAxis.classList.add('chart-axis-line');
+            svg.appendChild(xAxis);
+
+            // Draw Y Axis (Capital)
+            const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            yAxis.setAttribute("x1", padding);
+            yAxis.setAttribute("y1", padding);
+            yAxis.setAttribute("x2", padding);
+            yAxis.setAttribute("y2", chartHeight - padding);
+            yAxis.classList.add('chart-axis-line');
+            svg.appendChild(yAxis);
+
+            // X-axis labels (Dates) - show a few representative dates
+            const numXLabels = Math.min(dataPoints.length, 5); // Max 5 labels
+            for (let i = 0; i < numXLabels; i++) {
+                const index = Math.floor(i * (dataPoints.length - 1) / (numXLabels - 1));
+                const point = dataPoints[index];
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", xScale(point.date));
+                text.setAttribute("y", chartHeight - padding + 15);
+                text.setAttribute("text-anchor", "middle");
+                text.classList.add('chart-axis-text');
+                text.textContent = point.date.toLocaleDateString('es-ES', {
+                    month: 'numeric',
+                    day: 'numeric'
+                });
+                svg.appendChild(text);
+            }
+
+            // Y-axis labels (Capital) - show min, max, and a few in between
+            const numYLabels = 5; // Fixed number of Y labels
+            for (let i = 0; i < numYLabels; i++) {
+                const value = minValue + (maxValue - minValue) * (i / (numYLabels - 1));
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", padding - 5);
+                text.setAttribute("y", yScale(value));
+                text.setAttribute("text-anchor", "end");
+                text.setAttribute("dominant-baseline", "middle");
+                text.classList.add('chart-axis-text');
+                text.textContent = `$${value.toFixed(0)}`;
+                svg.appendChild(text);
+            }
+
+
+            // Path for the line chart
+            const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const pathData = dataPoints.map(point => `${xScale(point.date)},${yScale(point.value)}`).join('L');
+            linePath.setAttribute("d", `M${pathData}`);
+            linePath.classList.add('chart-line');
+            svg.appendChild(linePath);
+
+            // Circles for each data point
+            dataPoints.forEach(point => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", xScale(point.date));
+                circle.setAttribute("cy", yScale(point.value));
+                circle.setAttribute("r", 4); // Radius of the circle
+                circle.classList.add('chart-dot');
+                svg.appendChild(circle);
+
+                // Add tooltip on hover
+                const tooltip = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                tooltip.textContent = `${point.date.toLocaleDateString('es-ES')}: $${point.value.toFixed(2)}`;
+                circle.appendChild(tooltip);
+            });
+        }
+
+
+        // --- EVENT LISTENERS Y LLAMADAS INICIALES ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            generateCalendar();
+            updateMonthlyStats();
+            updateAccountCapitalDisplay();
+            generateWeeklySummaries();
+            // --- INICIALIZA EL NUEVO COMPONENTE ---
+            updateGrowthMetrics();
+        });
+
+        document.getElementById('darkModeToggle').addEventListener('change', function () {
+            isDarkMode = this.checked;
+            applyDarkMode();
+            saveData();
+        });
+
+        document.getElementById('calendarSize').addEventListener('change', function () {
+            calendarDisplaySize = this.value;
+            applyCalendarSize();
+            saveData();
+        });
+
+        document.getElementById('cellSize').addEventListener('change', function () {
+            cellSize = this.value;
+            applyCellSize();
+            saveData();
+        });
+
+        document.getElementById('thisMonthBtn').addEventListener('click', thisMonth);
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Example: Add click event listeners to elements with class 'capital-evolution-point'
+            const points = document.querySelectorAll('.capital-evolution-point');
+
+            points.forEach(point => {
+                point.addEventListener('click', function () {
+                    // Retrieve the balance data stored in a data attribute
+                    const balance = this.getAttribute('data-balance');
+                    // Display the balance in an alert or any other HTML element
+                    alert('Balance del día: ' + balance);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
